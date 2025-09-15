@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+import { IoMdClose } from "react-icons/io";
 
 const Home = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [images, setImages] = useState([]);
-
+  const [clickedImage, setClickedImage] = useState();
   const handleUploadFile = (e) => {
     setSelectedFile(e.target.files[0]);
   };
@@ -18,7 +19,7 @@ const Home = () => {
   const getData = async () => {
     const res = await axios.get("http://localhost:5000/api/images/get-images");
     setImages(res.data.images);
-    toast.success('Images Fetched successfully');
+    toast.success("Images Fetched successfully");
   };
 
   const handleSendFileToCloud = async () => {
@@ -31,12 +32,18 @@ const Home = () => {
       { headers: { "Content-Type": "multipart/form-data" } }
     );
 
-    console.log(res.data); 
+    console.log(res.data);
     getData();
     setSelectedFile(null);
-    toast.success('Image uploaded successfully');
-
+    toast.success("Image uploaded successfully");
   };
+
+
+  const handleClickedImage = (img) =>{
+    setClickedImage(img);
+    console.log(clickedImage);
+  }
+
   return (
     <div className="min-h-screen w-full container m-auto text-text-primary-dark pt-10">
       <div className="flex w-full justify-around flex-wrap items-center border border-border-strong-dark rounded-2xl px-5 py-10 gap-2">
@@ -88,12 +95,13 @@ const Home = () => {
       </div>
       <div className="flex gap-2">
         {images.length ? (
-          <div className="flex wrap mt-6 gap-4">
+          <div className="flex flex-wrap mt-6 gap-4">
             {images.map((img, idx) => (
               <img
                 key={idx}
                 src={img.location}
                 alt={img.name}
+                onClick={()=>setClickedImage(img)}
                 className="w-60 h-60 object-cover rounded-md shadow-md"
               />
             ))}
@@ -102,6 +110,13 @@ const Home = () => {
           <p>No Images Uploaded</p>
         )}
       </div>
+
+      {clickedImage && (
+        <div className="min-h-screen w-full bg-accent-dark/10 flex justify-center items-center absolute top-0 left-0 backdrop-blur-xl p-10">
+          <img src={clickedImage.location} alt="" className="max-h-screen max-w-screen"/>
+          <IoMdClose className="z-10 absolute top-4 text-4xl p-1 bg-border-strong-dark rounded-full" onClick={()=>setClickedImage(null)}></IoMdClose>
+        </div>
+      )}
     </div>
   );
 };
