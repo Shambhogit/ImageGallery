@@ -3,7 +3,7 @@ import multer from "multer";
 import multerS3 from "multer-s3";
 import { S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
-import { uploadImage } from "../controllers/images.controller.js";
+import { uploadImage , getImages} from "../controllers/images.controller.js";
 
 dotenv.config();
 
@@ -35,5 +35,6 @@ const upload = multer({
 
 
 router.post("/upload", upload.single("photo"), uploadImage);
+router.get("/get-images", getImages);
 
 export default router;

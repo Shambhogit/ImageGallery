@@ -1,24 +1,41 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
+
 const Home = () => {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [images, setImages] = useState([]);
+
   const handleUploadFile = (e) => {
-    console.log(e.target.files);
     setSelectedFile(e.target.files[0]);
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const getData = async () => {
+    const res = await axios.get("http://localhost:5000/api/images/get-images");
+    setImages(res.data.images);
+    toast.success('Images Fetched successfully');
   };
 
   const handleSendFileToCloud = async () => {
     const formdata = new FormData();
-    formdata.append('photo', selectedFile);
+    formdata.append("photo", selectedFile);
 
     const res = await axios.post(
       "http://localhost:5000/api/images/upload",
       formdata,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
+      { headers: { "Content-Type": "multipart/form-data" } }
     );
-    console.log(res);
+
+    console.log(res.data); 
+    getData();
+    setSelectedFile(null);
+    toast.success('Image uploaded successfully');
+
   };
   return (
     <div className="min-h-screen w-full container m-auto text-text-primary-dark pt-10">
@@ -68,6 +85,22 @@ const Home = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="flex gap-2">
+        {images.length ? (
+          <div className="flex wrap mt-6 gap-4">
+            {images.map((img, idx) => (
+              <img
+                key={idx}
+                src={img.location}
+                alt={img.name}
+                className="w-60 h-60 object-cover rounded-md shadow-md"
+              />
+            ))}
+          </div>
+        ) : (
+          <p>No Images Uploaded</p>
+        )}
       </div>
     </div>
   );

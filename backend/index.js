@@ -2,8 +2,10 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import imagesRouter from './routes/images.route.js';
+import { getDbConnection } from './utils/dbConnection.js';
 dotenv.config();
 
+getDbConnection();
 
 const PORT = process.env.PORT;
 const app = express();
