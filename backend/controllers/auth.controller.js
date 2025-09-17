@@ -7,7 +7,6 @@ import jwt from 'jsonwebtoken';
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // console.log(req.ip);
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -62,7 +61,7 @@ export const login = async (req, res) => {
       message: "Internal Server Error",
     });
   }
-}
+};
 
 export const register = async (req, res) => {
   try {
@@ -182,6 +181,67 @@ export const verifyOTP = async (req, res) => {
 
   } catch (error) {
     console.error("Error in verifyOTP:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const refreshToken = async (req, res) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token missing",
+      });
+    }
+
+    jwt.verify(token, process.env.JWT_REFRESH_SECRET, async (err, payload) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          message: "Invalid or expired refresh token",
+        });
+      }
+
+      const user = await User.findById(payload._id);
+      if (!user) {
+        return res.status(403).json({
+          success: false,
+          message: "User no longer exists",
+        });
+      }
+
+      const accessToken = jwt.sign(
+        { _id: user._id },
+        process.env.JWT_ACCESS_SECRET,
+        { expiresIn: "15m" }
+      );
+
+      // Optional: rotate refresh token
+      // const newRefreshToken = jwt.sign(
+      //   { _id: user._id },
+      //   process.env.JWT_REFRESH_SECRET,
+      //   { expiresIn: "7d" }
+      // );
+      // res.cookie("refreshToken", newRefreshToken, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   sameSite: "strict",
+      //   maxAge: 30 * 24 * 60 * 60 * 1000,
+      // });
+
+      return res.status(200).json({
+        success: true,
+        message: "Access token refreshed",
+        accessToken,
+      });
+    });
+
+  } catch (error) {
+    console.error("Error in refreshToken:", error.message);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
