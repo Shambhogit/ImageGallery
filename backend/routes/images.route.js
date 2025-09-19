@@ -36,6 +36,6 @@ const upload = multer({
 
 
 router.post("/upload", validateAccess, upload.single("photo"), uploadImage);
-router.get("/get-images", getImages);
+router.get("/get-images", validateAccess, getImages);
 
 export default router;

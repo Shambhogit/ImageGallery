@@ -1,4 +1,5 @@
 import Image from "../model/image.model.js";
+import { User } from "../model/user.model.js";
 
 export const uploadImage = async (req, res) => {
     try {
@@ -12,7 +13,16 @@ export const uploadImage = async (req, res) => {
             size: req.file.size,
         };
 
-        await Image.create(fileData);
+        const image = await Image.create(fileData);
+
+        const userId = req.user_id;
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { $push: { images: image._id } },
+            { new: true }
+        );
+
 
         return res.status(200).json({
             message: "File uploaded successfully",
@@ -26,12 +36,13 @@ export const uploadImage = async (req, res) => {
 export const getImages = async (req, res) => {
     try {
 
-        const images = await Image.find();
+        const user = await User.findById(req.user_id).populate("images");
+        const images = user.images;
 
         return res.status(200).json({
             message: "Images Fetched Successfully",
             images,
-            size:images.length,
+            size: images.length,
         });
     } catch (err) {
         console.error("Upload error:", err);
