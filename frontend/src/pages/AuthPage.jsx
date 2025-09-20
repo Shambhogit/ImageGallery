@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 function AuthPage() {
   const [mode, setMode] = useState("login"); // 'login' or 'register'
@@ -112,7 +114,25 @@ function LoginForm() {
 }
 
 function RegisterForm() {
-  const [verify, setVerify] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [email, setEmail] = useState("");
+
+  const [otpField, setOtpField] = useState(false);
+
+  const handleGetOtp = async (e) => {
+    e.preventDefault();
+
+    await axios
+      .post("http://localhost:5000/api/auth/get-otp", { email })
+      .then((res) => {
+        toast.success(res.data.message);
+        setOtpField(true);
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Some error in getting OTP");
+      });
+  };
 
   return (
     <form className="space-y-4">
@@ -123,48 +143,56 @@ function RegisterForm() {
       />
 
       <Input
+        value={email}
+        setFunc={setEmail}
         label="Email"
         type="email"
         name="email"
         placeholder="you@domain.com"
       />
-      <Input
-        label="Password"
-        type="password"
-        name="password"
-        placeholder="Choose a strong password"
-      />
-      <Input
-        label="Confirm"
-        type="password"
-        name="confirm"
-        placeholder="Repeat password"
-      />
+      {isVerified && (
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          placeholder="Choose a strong password"
+        />
+      )}
+      {isVerified && (
+        <Input
+          label="Confirm"
+          type="password"
+          name="confirm"
+          placeholder="Repeat password"
+        />
+      )}
 
-      {verify ? (
-        <button
-          type="submit"
-          className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95"
-        >
+      {otpField && <OtpForm email={email} setOtpField={setOtpField} setIsVerified={setIsVerified}/>}
+
+      {isVerified ? (
+        <button className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95">
           Create account
         </button>
       ) : (
         <button
-          type="submit"
+          onClick={(e) => handleGetOtp(e)}
           className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95"
         >
           Verify Email
         </button>
       )}
+
     </form>
   );
 }
 
-function Input({ label, type = "text", name, placeholder }) {
+function Input({ label, type = "text", name, placeholder, value, setFunc }) {
   return (
     <label className="block text-sm">
       <span className="text-gray-300 text-xs mb-1 block">{label}</span>
       <input
+        value={value} // controlled input
+        onChange={(e) => setFunc(e.target.value)}
         name={name}
         type={type}
         placeholder={placeholder}
@@ -173,5 +201,67 @@ function Input({ label, type = "text", name, placeholder }) {
     </label>
   );
 }
+
+function OtpForm({email, setOtpField, setIsVerified}) {
+  const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
+
+  const handleChange = (value, index) => {
+    if (/^\d?$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+
+      // auto focus next input
+      if (value && index < 8) {
+        document.getElementById(`otp-${index + 1}`).focus();
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const strOtp = otp.join("");
+    await axios.post('http://localhost:5000/api/auth/verify-otp', {email, otp:strOtp})
+    .then((res)=>{
+      toast.success(res.data.message);
+      setOtpField(false);
+      setIsVerified(true);
+    })
+    .catch((err)=>{
+      toast.error("Error in Verifying OTP");
+    })
+  };
+
+  return (
+    <div
+      className="w-full bg-gray-900 text-white flex flex-col items-center justify-center p-3 gap-4 relative rounded-2xl shadow-lg"
+    >
+      {/* OTP Inputs */}
+      <div className="flex gap-1">
+        {otp.map((digit, i) => (
+          <input
+            key={i}
+            id={`otp-${i}`}
+            type="text"
+            value={digit}
+            maxLength={1}
+            required
+            onChange={(e) => handleChange(e.target.value, i)}
+            className="w-10 h-10 text-center rounded-md bg-gray-800 text-white font-semibold outline-none focus:ring-2 focus:ring-pink-500"
+          />
+        ))}
+      </div>
+
+      {/* Verify Button */}
+      <button
+        onClick={handleSubmit}
+        className="w-full h-9 bg-pink-600 hover:bg-pink-500 rounded-lg font-semibold transition"
+      >
+        Verify
+      </button>
+    </div>
+  );
+}
+
 
 export default AuthPage;
