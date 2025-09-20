@@ -9,6 +9,10 @@ const otpSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    verified:{
+        type:Boolean,
+        default:false,
+    },
     otp: {
       type: String,
     },

@@ -15,7 +15,6 @@ export const login = async (req, res) => {
         success: false,
         message: "Invalid email or password",
       });
-
     }
 
     const result = await bcrypt.compare(password, user.password);
@@ -75,6 +74,16 @@ export const register = async (req, res) => {
         message: "Username already exists",
       });
     }
+
+    const dbEmail = await Otp.findOne({email});
+      if (!dbEmail || !dbEmail.verified) {
+      return res.status(401).json({
+        success: false,
+        message: "Email is not verified",
+      });
+    }
+
+    await Otp.findOneAndDelete({email});
 
     const saltRounds = parseInt(process.env.GEN_SALT) || 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -151,7 +160,9 @@ export const verifyOTP = async (req, res) => {
       });
     }
     
-    await Otp.findOneAndDelete({email});
+    dbEmail.otp = undefined;
+    dbEmail.verified = true;
+    await dbEmail.save();
 
     return res.status(200).json({
       success: true,
