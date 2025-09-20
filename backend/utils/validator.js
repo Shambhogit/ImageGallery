@@ -27,3 +27,8 @@ export const otpValidation = [
     .isLength({ min: 8, max: 8 })
     .withMessage("OTP must be 8 digits"),
 ];
+
+
+export const getOtpValidation = [
+  body("email").isEmail().withMessage("Invalid email address"),
+];

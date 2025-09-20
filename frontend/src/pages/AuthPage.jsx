@@ -1,0 +1,177 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+
+function AuthPage() {
+  const [mode, setMode] = useState("login"); // 'login' or 'register'
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-black to-gray-900 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 120, damping: 18 }}
+        className="max-w-md w-full bg-gray-850/70 backdrop-blur-md border border-gray-700 rounded-2xl shadow-2xl p-8"
+      >
+        <Header mode={mode} setMode={setMode} />
+
+        <div className="mt-6">
+          {mode === "login" ? <LoginForm /> : <RegisterForm />}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Header({ mode, setMode }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-500 flex items-center justify-center shadow-lg">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 11c0-1.657-1.343-3-3-3S6 9.343 6 11s1.343 3 3 3 3-1.343 3-3zM21 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"
+            />
+          </svg>
+        </div>
+        <div>
+          <h1 className="text-white text-xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
+          <p className="text-sm text-gray-400">
+            {mode === "login" ? "Sign in to continue" : "Create your account"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 items-center">
+        <ToggleBtn active={mode === "login"} onClick={() => setMode("login")}>
+          Login
+        </ToggleBtn>
+        <ToggleBtn
+          active={mode === "register"}
+          onClick={() => setMode("register")}
+        >
+          Register
+        </ToggleBtn>
+      </div>
+    </div>
+  );
+}
+
+function ToggleBtn({ children, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+        active
+          ? "bg-white text-black shadow-md"
+          : "text-gray-300 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function LoginForm() {
+  return (
+    <form className="space-y-4">
+      <Input
+        label="Email"
+        type="email"
+        name="email"
+        placeholder="you@domain.com"
+      />
+      <Input
+        label="Password"
+        type="password"
+        name="password"
+        placeholder="Your secure password"
+      />
+
+      <button type="button" className="text-sm text-pink-400 hover:underline">
+        Forgot Password?
+      </button>
+
+      <button
+        type="submit"
+        className="w-full py-2 rounded-lg bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-semibold shadow-md hover:opacity-95"
+      >
+        Sign In
+      </button>
+    </form>
+  );
+}
+
+function RegisterForm() {
+  const [verify, setVerify] = useState(false);
+
+  return (
+    <form className="space-y-4">
+      <Input
+        label="User Name"
+        name="user_name"
+        placeholder="user_name (ex. john_1223)"
+      />
+
+      <Input
+        label="Email"
+        type="email"
+        name="email"
+        placeholder="you@domain.com"
+      />
+      <Input
+        label="Password"
+        type="password"
+        name="password"
+        placeholder="Choose a strong password"
+      />
+      <Input
+        label="Confirm"
+        type="password"
+        name="confirm"
+        placeholder="Repeat password"
+      />
+
+      {verify ? (
+        <button
+          type="submit"
+          className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95"
+        >
+          Create account
+        </button>
+      ) : (
+        <button
+          type="submit"
+          className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95"
+        >
+          Verify Email
+        </button>
+      )}
+    </form>
+  );
+}
+
+function Input({ label, type = "text", name, placeholder }) {
+  return (
+    <label className="block text-sm">
+      <span className="text-gray-300 text-xs mb-1 block">{label}</span>
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        className="w-full px-4 py-2 rounded-lg bg-transparent border border-gray-700 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500"
+      />
+    </label>
+  );
+}
+
+export default AuthPage;

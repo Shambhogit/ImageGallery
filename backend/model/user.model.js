@@ -27,18 +27,6 @@ const userSchema = new mongoose.Schema(
         ref: "Image", // Reference to Image collection
       },
     ],
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    otp: {
-      type: String,
-    },
-    otpCreatedAt: {
-      type: Date,
-      default: Date.now,
-      expires: 300,
-    },
   },
   { timestamps: true }
 );
