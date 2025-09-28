@@ -5,7 +5,7 @@ import AuthPage from "./pages/AuthPage";
 const App = () => {
   return (
     <div className="min-h-screen w-full bg-bg-primary-dark">
-      <AuthPage/>
+      <Home/>
     </div>
   );
 };

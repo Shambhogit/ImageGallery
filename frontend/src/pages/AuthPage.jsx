@@ -2,9 +2,22 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router";
 
 function AuthPage() {
-  const [mode, setMode] = useState("login"); // 'login' or 'register'
+  const [mode, setMode] = useState("login");
+  const [token, setToken] = useState(null);
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    setToken(savedToken);
+    console.log(savedToken);
+    if (savedToken) {
+      navigate("/home");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-black to-gray-900 p-6">
       <motion.div
@@ -84,15 +97,40 @@ function ToggleBtn({ children, active, onClick }) {
 }
 
 function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    await axios
+      .post("http://localhost:5000/api/auth/login", { email, password })
+      .then((res) => {
+        toast.success(res.data.message);
+        localStorage.setItem("token", res.data.accessToken);
+        setEmail("");
+        setPassword("");
+        navigate('/home');
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error(err.response.data.message);
+      });
+  };
+
   return (
     <form className="space-y-4">
       <Input
+        value={email}
+        setFunc={setEmail}
         label="Email"
         type="email"
         name="email"
         placeholder="you@domain.com"
       />
       <Input
+        value={password}
+        setFunc={setPassword}
         label="Password"
         type="password"
         name="password"
@@ -104,7 +142,7 @@ function LoginForm() {
       </button>
 
       <button
-        type="submit"
+        onClick={(e) => handleSubmit(e)}
         className="w-full py-2 rounded-lg bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-semibold shadow-md hover:opacity-95"
       >
         Sign In
@@ -116,7 +154,9 @@ function LoginForm() {
 function RegisterForm() {
   const [isVerified, setIsVerified] = useState(false);
   const [email, setEmail] = useState("");
-
+  const [user, setUser] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
   const [otpField, setOtpField] = useState(false);
 
   const handleGetOtp = async (e) => {
@@ -134,9 +174,35 @@ function RegisterForm() {
       });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    await axios
+      .post("http://localhost:5000/api/auth/register", {
+        user_name: user,
+        email,
+        password,
+      })
+      .then((res) => {
+        toast.success(res.data.message);
+        localStorage.setItem("token", res.data.accessToken);
+        navigate('/home');
+
+        setEmail("");
+        setPassword("");
+        setUser("");
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Some error in Creating account");
+      });
+  };
+
   return (
     <form className="space-y-4">
       <Input
+        value={user}
+        setFunc={setUser}
         label="User Name"
         name="user_name"
         placeholder="user_name (ex. john_1223)"
@@ -152,6 +218,8 @@ function RegisterForm() {
       />
       {isVerified && (
         <Input
+          value={password}
+          setFunc={setPassword}
           label="Password"
           type="password"
           name="password"
@@ -167,10 +235,19 @@ function RegisterForm() {
         />
       )}
 
-      {otpField && <OtpForm email={email} setOtpField={setOtpField} setIsVerified={setIsVerified}/>}
+      {otpField && (
+        <OtpForm
+          email={email}
+          setOtpField={setOtpField}
+          setIsVerified={setIsVerified}
+        />
+      )}
 
       {isVerified ? (
-        <button className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95">
+        <button
+          onClick={(e) => handleSubmit(e)}
+          className="w-full py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-pink-500 text-white font-semibold shadow-md hover:opacity-95"
+        >
           Create account
         </button>
       ) : (
@@ -181,7 +258,6 @@ function RegisterForm() {
           Verify Email
         </button>
       )}
-
     </form>
   );
 }
@@ -202,7 +278,7 @@ function Input({ label, type = "text", name, placeholder, value, setFunc }) {
   );
 }
 
-function OtpForm({email, setOtpField, setIsVerified}) {
+function OtpForm({ email, setOtpField, setIsVerified }) {
   const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
 
   const handleChange = (value, index) => {
@@ -221,21 +297,21 @@ function OtpForm({email, setOtpField, setIsVerified}) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const strOtp = otp.join("");
-    await axios.post('http://localhost:5000/api/auth/verify-otp', {email, otp:strOtp})
-    .then((res)=>{
-      toast.success(res.data.message);
-      setOtpField(false);
-      setIsVerified(true);
-    })
-    .catch((err)=>{
-      toast.error("Error in Verifying OTP");
-    })
+    await axios
+      .post("http://localhost:5000/api/auth/verify-otp", { email, otp: strOtp })
+      .then((res) => {
+        toast.success(res.data.message);
+        setOtpField(false);
+        setIsVerified(true);
+      })
+      .catch((err) => {
+        toast.error("Error in Verifying OTP");
+        console.log(err);
+      });
   };
 
   return (
-    <div
-      className="w-full bg-gray-900 text-white flex flex-col items-center justify-center p-3 gap-4 relative rounded-2xl shadow-lg"
-    >
+    <div className="w-full bg-gray-900 text-white flex flex-col items-center justify-center p-3 gap-4 relative rounded-2xl shadow-lg">
       {/* OTP Inputs */}
       <div className="flex gap-1">
         {otp.map((digit, i) => (
@@ -262,6 +338,5 @@ function OtpForm({email, setOtpField, setIsVerified}) {
     </div>
   );
 }
-
 
 export default AuthPage;
